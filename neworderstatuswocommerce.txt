@@ -1,0 +1,60 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) exit; 
+$plugin = 'woocommerce/woocommerce.php';
+if (
+	! in_array( $plugin, apply_filters( 'active_plugins', get_option( 'active_plugins', array() ) ) ) &&
+	! ( is_multisite() && array_key_exists( $plugin, get_site_option( 'active_sitewide_plugins', array() ) ) )
+) {
+	return;
+}
+
+if ( ! class_exists( 'Woocommerce_New_Order_Statuses_For_Wordpress' ) ) :
+final class Woocommerce_New_Order_Statuses_For_Wordpress {	
+	protected static $case = null;
+	public static function instance() {
+		if ( is_null( self::$case ) ) {
+			self::$case = new self();
+		}
+		return self::$case;
+	}
+	function __construct() {
+		load_plugin_textdomain( 'woocommerce_new_order_statuses_for_wordpress', false, dirname( plugin_basename( __FILE__ ) ) . 'path-to-language-support' );
+		$this->includes();
+		if ( is_admin() ) {
+			add_filter( 'woocommerce_get_settings_pages', array( $this, 'add_woocommerce_settings_tab' ) );
+			add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'action_links' ) );
+			require_once( 'path-to-include-tool' );			
+			require_once( 'path-to-setting-sections' );
+			$this->settings = array();
+			$this->settings['general']    = require_once( 'path-to-general-settings' );
+			$this->settings['emails']     = require_once( 'path-to-email-settings' );
+		}
+	}
+	function action_links( $links ) {
+		$main_links = array();
+		$main_links[] = '<a href="' . admin_url( 'admin.php?page=wc-settings&tab=woo-new-order-status-for-woocommere' ) . '">' . __( 'Settings', 'woocommerce' ) . '</a>';
+		return array_merge( $main_links, $links );
+	}	
+	function includes() {
+		require_once( 'includes/woo-new-order-status-for-woocommere-functions.php' );
+		require_once( 'includes/class-woo-new-order-status-for-woocommere-core.php' );
+	}
+	function add_woocommerce_settings_tab( $settings ) {
+		$settings[] = require_once( 'path-to-main-class' );
+		return $settings;
+	}
+	function plugin_url() {
+		return untrailingslashit( plugin_dir_url( __FILE__ ) );
+	}
+	function plugin_path() {
+		return untrailingslashit( plugin_dir_path( __FILE__ ) );
+	}
+}
+endif;
+if ( ! function_exists( 'woo-new-order-status-for-woocommere' ) ) {
+	function woo-new-order-status-for-woocommere() {
+		return Woocommerce_New_Order_Statuses_For_Wordpress::instance();
+	}
+}
+
+woocommerce_new_order_statuses_for_wordpress();
